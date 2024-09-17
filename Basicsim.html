@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>S-Curve Simulation</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    .slider-container {
+      margin-bottom: 20px;
+    }
+    .slider-label {
+      font-size: 16px;
+      margin-bottom: 5px;
+    }
+    #curve-chart {
+      width: 100%;
+      max-width: 800px;
+    }
+    #revenue-chart {
+      width: 100%;
+      max-width: 800px;
+      margin-top: 40px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Technology Adoption S-Curve Simulation</h1>
+
+  <!-- Sliders for various inputs -->
+  <div class="slider-container">
+    <div class="slider-label">R&D Investment</div>
+    <input type="range" min="1" max="100" value="50" id="rdSlider" oninput="updateScurve()" />
+    <span id="rdValue">50</span>
+  </div>
+
+  <div class="slider-container">
+    <div class="slider-label">Marketing Spend</div>
+    <input type="range" min="1" max="100" value="50" id="marketingSlider" oninput="updateScurve()" />
+    <span id="marketingValue">50</span>
+  </div>
+
+  <div class="slider-container">
+    <div class="slider-label">Price Sensitivity</div>
+    <input type="range" min="1" max="100" value="50" id="priceSlider" oninput="updateScurve()" />
+    <span id="priceValue">50</span>
+  </div>
+
+  <div class="slider-container">
+    <div class="slider-label">Competitor Pressure</div>
+    <input type="range" min="1" max="100" value="50" id="competitorSlider" oninput="updateScurve()" />
+    <span id="competitorValue">50</span>
+  </div>
+
+  <div class="slider-container">
+    <div class="slider-label">Customer Satisfaction</div>
+    <input type="range" min="1" max="100" value="50" id="customerSlider" oninput="updateScurve()" />
+    <span id="customerValue">50</span>
+  </div>
+
+  <div class="slider-container">
+    <div class="slider-label">Revenue Growth</div>
+    <input type="range" min="1" max="100" value="50" id="revenueSlider" oninput="updateRevenue()" />
+    <span id="revenueValue">50</span>
+  </div>
+
+  <button onclick="transitionTechnology()">Transition to New Technology</button>
+
+  <!-- S-Curve Chart -->
+  <canvas id="curve-chart"></canvas>
+
+  <!-- Revenue & Customer Satisfaction Chart -->
+  <canvas id="revenue-chart"></canvas>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    let sCurveChart;
+    let revenueChart;
+
+    // Function to simulate the S-Curve based on inputs
+    function generateScurveData(rdInvestment, marketingSpend, priceSensitivity, competitorPressure) {
+      const data = [];
+      const transitionPoint = Math.floor(50 + rdInvestment * 0.3 - competitorPressure * 0.2); // Transition point influenced by R&D and Competitors
+      const saturationPoint = transitionPoint + 20;
+
+      for (let i = 0; i <= 100; i++) {
+        if (i < transitionPoint) {
+          data.push(i * (marketingSpend / 50)); // Early growth influenced by marketing
+        } else if (i < saturationPoint) {
+          data.push(transitionPoint + (i - transitionPoint) * (rdInvestment / 100)); // Rapid growth influenced by R&D
+        } else {
+          data.push(saturationPoint + (i - saturationPoint) * (priceSensitivity / 100)); // Late growth and maturity
+        }
+      }
+      return data;
+    }
+
+    // Function to simulate revenue based on customer satisfaction and revenue growth
+    function generateRevenueData(customerSatisfaction, revenueGrowth) {
+      const data = [];
+      for (let i = 0; i <= 100; i++) {
+        data.push(customerSatisfaction * (revenueGrowth / 50) * Math.sin(i * Math.PI / 100) * 100); // Revenue based on satisfaction and growth
+      }
+      return data;
+    }
+
+    // Initialize the S-Curve Chart
+    function initCurveChart() {
+      const ctx = document.getElementById('curve-chart').getContext('2d');
+      sCurveChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: Array.from({ length: 101 }, (_, i) => i), // X-axis represents time
+          datasets: [{
+            label: 'Adoption Rate (%)',
+            borderColor: 'rgba(75, 192, 192, 1)',
+            data: generateScurveData(50, 50, 50, 50),
+            fill: false,
+            tension: 0.1
+          }]
+        },
+        options: {
+          scales: {
+            x: {
+              title: {
+                display: true,
+                text: 'Time'
+              }
+            },
+            y: {
+              title: {
+                display: true,
+                text: 'Adoption (%)'
+              },
+              min: 0,
+              max: 100
+            }
+          }
+        }
+      });
+    }
+
+    // Initialize the Revenue Chart
+    function initRevenueChart() {
+      const ctx = document.getElementById('revenue-chart').getContext('2d');
+      revenueChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: Array.from({ length: 101 }, (_, i) => i), // X-axis represents time
+          datasets: [{
+            label: 'Revenue ($)',
+            borderColor: 'rgba(255, 99, 132, 1)',
+            data: generateRevenueData(50, 50),
+            fill: false,
+            tension: 0.1
+          }]
+        },
+        options: {
+          scales: {
+            x: {
+              title: {
+                display: true,
+                text: 'Time'
+              }
+            },
+            y: {
+              title: {
+                display: true,
+                text: 'Revenue ($)'
+              },
+              min: 0,
+              max: 5000
+            }
+          }
+        }
+      });
+    }
+
+    // Update the S-Curve chart based on sliders
+    function updateScurve() {
+      const rdInvestment = document.getElementById('rdSlider').value;
+      const marketingSpend = document.getElementById('marketingSlider').value;
+      const priceSensitivity = document.getElementById('priceSlider').value;
+      const competitorPressure = document.getElementById('competitorSlider').value;
+      const customerSatisfaction = document.getElementById('customerSlider').value;
+
+      document.getElementById('rdValue').textContent = rdInvestment;
+      document.getElementById('marketingValue').textContent = marketingSpend;
+      document.getElementById('priceValue').textContent = priceSensitivity;
+      document.getElementById('competitorValue').textContent = competitorPressure;
+      document.getElementById('customerValue').textContent = customerSatisfaction;
+
+      sCurveChart.data.datasets[0].data = generateScurveData(rdInvestment, marketingSpend, priceSensitivity, competitorPressure);
+      sCurveChart.update();
+    }
+
+    // Update the Revenue chart based on sliders
+    function updateRevenue() {
+      const customerSatisfaction = document.getElementById('customerSlider').value;
+      const revenueGrowth = document.getElementById('revenueSlider').value;
+
+      document.getElementById('revenueValue').textContent = revenueGrowth;
+
+      revenueChart.data.datasets[0].data = generateRevenueData(customerSatisfaction, revenueGrowth);
+      revenueChart.update();
+    }
+
+    // Function to reset the curve when transitioning to a new technology
+    function transitionTechnology() {
+      alert("Transitioning to new technology! S-Curve reset.");
+      sCurveChart.data.datasets[0].data = generateScurveData(50, 50, 50, 50);
+      sCurveChart.update();
+    }
+
+    // Initialize both charts on page load
+    window.onload = function () {
+      initCurveChart();
+      initRevenueChart();
+    };
+
+  </script>
+</body>
+</html>

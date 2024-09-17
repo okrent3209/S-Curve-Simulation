@@ -1,0 +1,5 @@
+function plotMultipleSCurves() {
+  const competitorData = generateCompetitorData();
+  myChart.data.datasets[1].data = competitorData;
+  myChart.update();
+}

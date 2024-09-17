@@ -1,0 +1,26 @@
+<div id="leaderboard">
+  <h3>Leaderboard</h3>
+  <ol id="leaderboard-list">
+    <!-- List of players and scores will go here -->
+  </ol>
+</div>
+
+<script>
+let leaderboard = [];
+
+function updateLeaderboard(name, score) {
+  leaderboard.push({ name, score });
+  leaderboard.sort((a, b) => b.score - a.score);
+  displayLeaderboard();
+}
+
+function displayLeaderboard() {
+  const list = document.getElementById('leaderboard-list');
+  list.innerHTML = '';
+  leaderboard.forEach(player => {
+    const li = document.createElement('li');
+    li.innerText = `${player.name}: ${player.score}`;
+    list.appendChild(li);
+  });
+}
+</script>
